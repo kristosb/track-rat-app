@@ -1,0 +1,180 @@
+/*
+ * Copyright (c) 2018-2023 Nordic Semiconductor ASA
+ * Copyright (c) 2017 Linaro Limited
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+ /dts-v1/;
+ #include <nordic/nrf52840_qiaa.dtsi>
+ #include "promicro_nrf52840-pinctrl.dtsi"
+ #include <zephyr/dt-bindings/input/input-event-codes.h>
+ 
+ / {
+	 model = "ProMicro NRF52840";
+	 compatible = "other,promicro-nrf52840";
+ 
+	 chosen {
+		//  zephyr,console = &cdc_acm_uart;
+		//  zephyr,shell-uart = &cdc_acm_uart;
+		//  zephyr,uart-mcumgr = &cdc_acm_uart;
+		//  zephyr,bt-mon-uart = &cdc_acm_uart;
+		//  zephyr,bt-c2h-uart = &cdc_acm_uart;
+		 zephyr,sram = &sram0;
+		 zephyr,flash = &flash0;
+		 zephyr,code-partition = &slot0_partition;
+		 zephyr,ieee802154 = &ieee802154;
+	 };
+
+	 leds {
+		 compatible = "gpio-leds";
+		 led0_blue: led_0 {
+			 gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+			 label = "Blue LED 0";
+		 };
+	 };
+
+	 buttons {
+		 compatible = "gpio-keys";
+		 button0: button_0 {
+			 gpios = <&gpio1 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			 label = "Push button switch 0";
+			 zephyr,code = <INPUT_KEY_0>;
+		 };
+	 };
+ 
+	 /* These aliases are provided for compatibility with samples */
+	 aliases {
+		 sw0 = &button0;
+		 led0 = &led0_blue;
+		 led0-blue = &led0_blue;
+		 mcuboot-button0 = &button0;
+		 mcuboot-led0 = &led0_blue;
+		 watchdog0 = &wdt0;
+	 };
+ };
+ 
+ &adc {
+	 status = "okay";
+ };
+ 
+ &gpiote {
+	 status = "okay";
+ };
+ 
+ &uicr {
+	 nfct-pins-as-gpios;
+	 gpio-as-nreset;
+ };
+ 
+ &gpio0 {
+	 status = "okay";
+ };
+ 
+ &gpio1 {
+	 status = "okay";
+ };
+ 
+ &uart0 {
+	 compatible = "nordic,nrf-uarte";
+	 status = "okay";
+	 current-speed = <115200>;
+	 pinctrl-0 = <&uart0_default>;
+	 pinctrl-1 = <&uart0_sleep>;
+	 pinctrl-names = "default", "sleep";
+ };
+ 
+ &i2c0 {
+	 compatible = "nordic,nrf-twi";
+	 status = "okay";
+	 pinctrl-0 = <&i2c0_default>;
+	 pinctrl-1 = <&i2c0_sleep>;
+	 pinctrl-names = "default", "sleep";
+ };
+ 
+ &i2c1 {
+	 compatible = "nordic,nrf-twi";
+	 /* Cannot be used together with spi1. */
+	 /* status = "okay"; */
+	 pinctrl-0 = <&i2c1_default>;
+	 pinctrl-1 = <&i2c1_sleep>;
+	 pinctrl-names = "default", "sleep";
+ };
+ 
+ &pwm0 {
+	 status = "okay";
+	 pinctrl-0 = <&pwm0_default>;
+	 pinctrl-1 = <&pwm0_sleep>;
+	 pinctrl-names = "default", "sleep";
+ };
+ 
+ /*
+  * By default, not adding all available SPI instances (spi2, spi3) due to
+  * limited GPIOs available on dongle board.
+  */
+ &spi0 {
+	 compatible = "nordic,nrf-spi";
+	 /* Cannot be used together with i2c0. */
+	 /* status = "okay"; */
+	 pinctrl-0 = <&spi0_default>;
+	 pinctrl-1 = <&spi0_sleep>;
+	 pinctrl-names = "default", "sleep";
+ };
+ 
+ &spi1 {
+	 compatible = "nordic,nrf-spi";
+	 status = "okay";
+	 pinctrl-0 = <&spi1_default>;
+	 pinctrl-1 = <&spi1_sleep>;
+	 pinctrl-names = "default", "sleep";
+ };
+ 
+ &ieee802154 {
+	 status = "okay";
+ };
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		/* MCUboot placed after Nordic MBR (this is set with the FLASH_LOAD_OFFSET
+			* Kconfig value when BOARD_HAS_NRF5_BOOTLOADER is enabled), otherwise MCUboot
+			* will be placed at 0x0. The size of this partition ensures that MCUBoot can
+			* be built with CDC ACM support and w/o optimizations.
+			*/
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x00000000 0x00010000>;
+		};
+
+		slot0_partition: partition@10000 {
+			label = "image-0";
+			reg = <0x00010000 0x00066000>;
+		};
+		slot1_partition: partition@76000 {
+			label = "image-1";
+			reg = <0x00076000 0x00066000>;
+		};
+		storage_partition: partition@dc000 {
+			label = "storage";
+			reg = <0x000dc000 0x00004000>;
+		};
+
+		/* Nordic nRF5 bootloader <0xe0000 0x1c000>
+			*
+			* In addition, the last and second last flash pages
+			* are used by the nRF5 bootloader and MBR to store settings.
+			*/
+	};
+};
+ 
+ zephyr_udc0: &usbd {
+	 compatible = "nordic,nrf-usbd";
+	 status = "okay";
+ 
+	 cdc_acm_uart: cdc_acm_uart {
+		 compatible = "zephyr,cdc-acm-uart";
+	 };
+ };
