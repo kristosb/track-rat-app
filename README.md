@@ -153,4 +153,8 @@ west flash -r uf2
 ```shell
 west build -b promicro --pristine -s app
 copy build\zephyr\zephyr.uf2 D:\
+cp build/zephyr/zephyr.uf2 /media/krystian/NICENANO/
+```
+```shell
+python -m serial.tools.miniterm /dev/ttyACM0 115200
 ```
