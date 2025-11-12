@@ -3,3 +3,13 @@
         zephyr,console = &cdc_acm_uart;
     };
 };
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	bno055_l: bno055@28 {
+		compatible = "bosch,bno055";
+		reg = <0x28>;
+		status = "okay";
+	};
+};

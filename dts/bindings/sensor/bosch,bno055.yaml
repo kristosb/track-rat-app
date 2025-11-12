@@ -1,0 +1,17 @@
+# Copyright (c) 2021, Bosch Sensortec GmbH
+# Copyright (c) 2022, Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+    The BNO055 is an inertial measurement unit. See more info at:
+    https://www.bosch-sensortec.com/products/motion-sensors/imus/bno055.html
+
+include: sensor-device.yaml
+
+compatible: "bosch,bno055"
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    description: |
+      The INT1 and (optional) INT2 signal connections.
