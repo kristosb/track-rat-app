@@ -46,7 +46,7 @@ int main(void)
 	bool led_state = true;
 	uint32_t dtr = 0;
 
-	k_msleep(5000);
+	
 	printk("Track Rat Application %s\n", APP_VERSION_STRING);
 	if (!gpio_is_ready_dt(&led)) {
 		return 0;
@@ -59,7 +59,7 @@ int main(void)
 
 	// Initialize USB device
 	const struct device *const dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
-
+	k_msleep(5000);
 	const struct device *gyro_dev = DEVICE_DT_GET(DT_NODELABEL(bno055_l));
 	if (!device_is_ready(gyro_dev)) {
 		printk("Device %s is not ready\n", gyro_dev->name);
