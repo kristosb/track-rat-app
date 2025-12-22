@@ -36,7 +36,7 @@ static void read_gyro_data(const struct device * gyro_dev)
 static void display_gyro_data(void)
 {
 
-	printk("pitch %d roll %d \n", gyr[1].val1 , gyr[2].val1*10);
+	printk("pitch %d roll %d \n", gyr[1].val1 , gyr[2].val1);
 	printk("heading %d \n", gyr[0].val1);
 }
 

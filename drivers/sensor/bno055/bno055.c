@@ -18,9 +18,6 @@
 
 LOG_MODULE_REGISTER(bno055, CONFIG_SENSOR_LOG_LEVEL);
 
-#define BNO055_WR_LEN                           256
-#define BNO055_CONFIG_FILE_RETRIES              15
-#define BNO055_CONFIG_FILE_POLL_PERIOD_US       10000
 #define BNO055_INTER_WRITE_DELAY_US             1000
 
 /*  STRUCTURE DEFINITIONS   */
@@ -248,16 +245,18 @@ static int bno055_init(const struct device *dev)
 	
 	//uint8_t chip_id;
 	uint8_t bno055_page_zero_u8 = BNO055_PAGE_ZERO;
+	uint8_t bno055_reset_u8 = BNO055_CMD_SOFT_RESET;
 	uint8_t data_u8 = BNO055_INIT_VALUE;
 	//Array holding the Software revision id
     uint8_t a_SW_ID_u8[BNO055_REV_ID_SIZE] = { BNO055_INIT_VALUE, BNO055_INIT_VALUE };
 	uint8_t adv_pwr_save;
 	uint8_t bno055_op_mode_u8 = BNO055_OPERATION_MODE_NDOF;
 	uint8_t bno055_euler_mode_u8 = BNO055_EULER_UNIT_DEG;
+	uint8_t bno055_unit_sel_u8 = 0;
 
 	/* stuct parameters are assign to bno055*/
     p_bno055 = &bno055;
-	k_msleep(300);
+	k_msleep(1000);
 	ret = bno055_bus_check(dev);
 	if (ret < 0) {
 		LOG_ERR("Could not initialize bus");
@@ -275,7 +274,13 @@ static int bno055_init(const struct device *dev)
 		LOG_ERR("Could not reset");
 		return ret;
 	}
-	
+	ret = bno055_reg_write(dev, BNO055_SYS_TRIGGER, &bno055_reset_u8, BNO055_GEN_READ_WRITE_LENGTH);
+	if (ret != 0) {
+		LOG_ERR("Could not reset");
+		return ret;
+	}
+
+	k_msleep(650);
 
 	ret = bno055_reg_read(dev, BNO055_CHIP_ID_REG, &data_u8, BNO055_GEN_READ_WRITE_LENGTH);
 	if (ret != 0) {
@@ -307,12 +312,6 @@ static int bno055_init(const struct device *dev)
 	}
 	p_bno055->bl_rev_id = data_u8;
 
-	/* twister error
-	ret = bno055_reg_read(dev, BNO055_SW_REV_ID_LSB_REG, &a_SW_ID_u8, BNO055_LSB_MSB_READ_LENGTH);
-	if (ret != 0) {
-		return ret;
-	}*/
-
     a_SW_ID_u8[BNO055_SW_ID_LSB] = BNO055_GET_BITSLICE(a_SW_ID_u8[BNO055_SW_ID_LSB], BNO055_SW_REV_ID_LSB);
     p_bno055->sw_rev_id =
         (uint16_t)((((uint32_t)((uint8_t)a_SW_ID_u8[BNO055_SW_ID_MSB])) << BNO055_SHIFT_EIGHT_BITS) | (a_SW_ID_u8[BNO055_SW_ID_LSB]));
@@ -321,24 +320,30 @@ static int bno055_init(const struct device *dev)
 	if (ret != 0) {
 		return ret;
 	}
+	
 	p_bno055->page_id = data_u8;
 
-	adv_pwr_save = BNO055_SET_BITS_POS_0(adv_pwr_save,
-					     BNO055_PWR_CONF_ADV_PWR_SAVE,
-					     BNO055_PWR_CONF_ADV_PWR_SAVE_DIS);
-	ret = bno055_reg_write_with_delay(dev, BNO055_POWER_MODE_REG,
-					  &adv_pwr_save, 1,
-					  BNO055_INTER_WRITE_DELAY_US);
-	if (ret != 0) {
-		return ret;
-	}
-	
 	ret = bno055_reg_write(dev, BNO055_OPERATION_MODE_REG, &bno055_op_mode_u8, BNO055_GEN_READ_WRITE_LENGTH);
 	if (ret != 0) {
 		return ret;
 	}
 
 	ret = bno055_reg_write(dev, BNO055_EULER_UNIT_REG, &bno055_euler_mode_u8, BNO055_GEN_READ_WRITE_LENGTH);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = bno055_reg_write(dev, BNO055_UNIT_SEL_ADDR, &bno055_unit_sel_u8, BNO055_GEN_READ_WRITE_LENGTH);
+	if (ret != 0) {
+		return ret;
+	}
+
+	k_msleep(300);
+
+	adv_pwr_save = 0;
+	ret = bno055_reg_write_with_delay(dev, BNO055_POWER_MODE_REG,
+					  &adv_pwr_save, 1,
+					  BNO055_INTER_WRITE_DELAY_US);
 	if (ret != 0) {
 		return ret;
 	}
